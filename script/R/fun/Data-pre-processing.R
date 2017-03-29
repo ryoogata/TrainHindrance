@@ -6,6 +6,15 @@ require(dplyr)
 # 指数表示の回避
 options(scipen=10)
 
+# function ----------------------------------------------------------------
+
+split <- function(dataframe){
+  id <- unique(dataframe$centralid)
+  for(i in id){
+    
+  }
+}
+
 # Datasets ----------------------------------------------------------------
 
 #
