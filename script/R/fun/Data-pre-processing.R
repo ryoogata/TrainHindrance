@@ -6,6 +6,9 @@ require(dplyr)
 # 指数表示の回避
 options(scipen=10)
 
+source("script/R/fun/functions.R")
+source("variables.R")
+
 # データの読み込み --------------------------------------------------------
 
 # 学習用データ
@@ -15,7 +18,10 @@ if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
 } else if ( length(grep("windows", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
   # 実行環境が Windows の場合
   train <- read.csv("/Users/r-ogata/Desktop/deepanalytics/train.edited.csv")
-} 
+} else if ( length(grep("Ubuntu", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
+  # 実行環境が Ubuntu の場合
+  train <- read.csv("data/train.edited.csv")
+}
 
 # 評価用データ
 if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
@@ -24,8 +30,10 @@ if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
 } else if ( length(grep("windows", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
   # 実行環境が Windows の場合
   test <- read.csv("/Users/r-ogata/Desktop/deepanalytics/test/test.csv")
-} 
-
+} else if ( length(grep("Ubuntu", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
+  # 実行環境が Ubuntu の場合
+  test <- read.csv("test/test.csv")
+}
 
 
 train <- na.omit(train)

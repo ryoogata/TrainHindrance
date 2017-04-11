@@ -1,82 +1,12 @@
 # Packages ----------------------------------------------------------------
 
-require(caret)
 require(dplyr)
 
 # 指数表示の回避
 options(scipen=10)
 
-# function ----------------------------------------------------------------
-
-# 列:centralid 毎に新しい data.frame を作成する
-split <- function(dataframe){
-  id <- unique(dataframe$centralid)
-  for(i in id){
-    df.name <- deparse(substitute(dataframe)) 
-    name <- paste0(df.name, ".", i)
-    assign(x = name, value = dataframe[which(dataframe$centralid == i),], envir = .GlobalEnv)
-  }
-}
-
-splitsave <- function(dataframe){
-  id <- unique(dataframe$centralid)
-  for(i in id){
-    df.name <- deparse(substitute(dataframe)) 
-    name <- paste0(df.name, ".", i)
-    assign(x = name, value = dataframe[which(dataframe$centralid == i),])
-    
-    if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
-      # 実行環境が Mac の場合
-      SAVE_DIR = paste0("~/Desktop/deepanalytics/", deparse(substitute(dataframe)), "/", name, ".csv")
-    } else if ( length(grep("windows", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
-      # 実行環境が Windows の場合
-      SAVE_DIR = paste0("/Users/r-ogata/Desktop/deepanalytics/", deparse(substitute(dataframe)), "/", name, ".csv")
-    }
-    write.table(eval(parse(text=name)) , file = SAVE_DIR, sep = ",", row.names = FALSE, append = FALSE, quote = FALSE)
-  }
-}
-
-# 列:datetime に 10 分加算した data.frame を返す
-add10minute <- function(dataframe){
-  dataframe$datetime <- as.character(as.POSIXlt(dataframe$datetime) + 600)
-  return(dataframe)
-}
-
-# 気象データ区分(温度, 湿度, etc ) と路線の ID を入力して、data.frame を作成する
-makeDF <- function(weatherdata, centralid){
-  # 
-  for(i in centralid){
-    if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
-      # 実行環境が Mac の場合
-      FILE = paste0("/Users/ryo/Desktop/deepanalytics/", weatherdata, "/", weatherdata, ".", i, ".csv")
-    } else if ( length(grep("windows", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
-      # 実行環境が Windows の場合
-      FILE = paste0("/Users/r-ogata/Desktop/deepanalytics/", weatherdata, "/", weatherdata, ".", i, ".csv")
-    } 
-    
-    df.name <- paste0(weatherdata, "." , i)
-    assign(x = df.name, value = read.csv(FILE, header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8"))
-  }
-  n <- length(centralid)
-  tmp.name <- paste0(weatherdata, ".", centralid[1])
-  tmp <- eval(parse(text = tmp.name))
-  for(i in 2:n){
-    tmp.name <- paste0(weatherdata, ".", centralid[i])
-    tmp <- rbind(tmp, eval(parse(text = tmp.name)))
-  }
-  return(tmp)
-}
-
-# 前後の値の平均を求める
-dataCompletion <- function(dataframe, colname, rownumber){
-  if ( is.na(dataframe[rownumber - 1, colname]) == FALSE || is.na(dataframe[rownumber + 1, colname]) == FALSE ){
-    result <- mean(c(dataframe[rownumber - 1, colname], dataframe[rownumber + 1, colname]), na.rm = TRUE)
-  } else {
-    result <- NA
-  }
-  return(result)
-}
-
+source("script/R/fun/functions.R")
+source("variables.R")
 
 # Datasets ----------------------------------------------------------------
 
@@ -106,96 +36,76 @@ dataCompletion <- function(dataframe, colname, rownumber){
 # 気温: temperature
 # 風向風速: windinfo
 
-# variable ====
-centralid.tyuou <- c(33130167, 2030130001, 33739426, 33140505)
-centralid.keihintohoku <- c(33114285, 33110164, 33130167, 33149672, 33144696, 2030130002, 33139659)
-centralid.keiyou <- c(33124109, 2030120003, 33130174, 2030130002, 33130167)
-centralid.uchibou <- c(33120159, 33129553, 34124264, 34120500, 34124620, 33129468)
-centralid.saikyoukawagoe <- c(33114285, 33119768, 33114029)
-
-centralid.sotobou <- c(33129448, 33129576, 33129135)
-centralid.yamanote <- c(2030130001, 33139659, 2030130002, 33130167)
-centralid.utsunomiya <- c(33094345, 33099131, 33099252, 33094030, 33094340, 33089175, 33114247, 33114285, 33110164, 33130167)
-centralid.shounanshinjuku <- c(33144016, 33149220, 33139659, 2030130001, 33110164, 33140537, 33114285, 33119753, 33109203)
-centralid.takasaki <- c(33114285, 33119753, 33109203)
-
 
 # モデル学習用支障データ ====
-# train.orig <- read.csv("./data/train.csv"
- train.orig <- read.csv("~/Desktop/deepanalytics/train.csv"
-# train.orig <- read.csv("/Users/r-ogata/Desktop/deepanalytics/train.csv"
-                ,header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8")
+if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
+  # 実行環境が Mac の場合
+  train.orig <- read.csv("~/Desktop/deepanalytics/train.csv"
+              ,header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8")
+} else if ( length(grep("windows", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
+  # 実行環境が Windows の場合
+  train.orig <- read.csv("/Users/r-ogata/Desktop/deepanalytics/train.csv"
+              ,header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8")
+} else if ( length(grep("Ubuntu", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
+  # 実行環境が Ubuntu の場合
+  train.orig <- read.csv("./data/train.csv"
+              ,header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8")
+}
 # dim(train.orig)
 # [1] 78768     6
-sapply(train.orig, function(x) sum(is.na(x)))
-
-length(train.orig[,"tyuou"])           # 78768
-length(train.orig[,"keihintohoku"])    # 78768
-length(train.orig[,"keiyou"])          # 78768
-length(train.orig[,"uchibou"])         # 78768
-length(train.orig[,"saikyoukawagoe"])  # 78768
-
-train.tyuou <- train[which(train.orig$tyuou != 0),"tyuou"]
-train.keihintohoku <- train[which(train.orig$keihintohoku != 0),"keihintohoku"]
-train.keiyou <- train[which(train.orig$keiyou != 0),"keiyou"]
-train.uchibou <- train[which(train.orig$uchibou != 0),"uchibou"]
-train.saikyoukawagoe <- train[which(train.orig$saikyoukawagoe != 0),"saikyoukawagoe"]
-
-length(train.tyuou)           # 3884
-length(train.keihintohoku)    # 4104
-length(train.keiyou)          # 1972
-length(train.uchibou)         # 2035
-length(train.saikyoukawagoe)  # 3357
-
-# table(train.tyuou)
-# train.tyuou
-# 1    2    3 
-# 2099 1450  335 
-hist(train.tyuou)
-
-# table(train.keihintohoku)
-# train.keihintohoku
-# 1    2    3 
-# 2631 1211  262
-hist(train.keihintohoku)
-
-# table(train.keiyou)
-# train.keiyou
-# 1   2   3 
-# 497 651 824 
-hist(train.keiyou)
-
-# table(train.uchibou)
-# train.uchibou
-# 1    2    3 
-# 604  274 1427 
-hist(train.uchibou)
-
-# table(train.saikyoukawagoe)
-# train.saikyoukawagoe
-# 1    2    3 
-# 1715  915  727 
-hist(train.saikyoukawagoe)
-
-# train$datetime <- as.POSIXlt(train$datetime)
-
-train.tyuou <- dplyr::select(train, c(datetime, tyuou)) %>%
-  dplyr::full_join(., precipitation.tyuou, by = "datetime")
-
+# sapply(train.orig, function(x) sum(is.na(x)))
+# 
+# length(train.orig[,"tyuou"])           # 78768
+# length(train.orig[,"keihintohoku"])    # 78768
+# length(train.orig[,"keiyou"])          # 78768
+# length(train.orig[,"uchibou"])         # 78768
+# length(train.orig[,"saikyoukawagoe"])  # 78768
+# 
+# train.tyuou <- train[which(train.orig$tyuou != 0),"tyuou"]
+# train.keihintohoku <- train[which(train.orig$keihintohoku != 0),"keihintohoku"]
+# train.keiyou <- train[which(train.orig$keiyou != 0),"keiyou"]
+# train.uchibou <- train[which(train.orig$uchibou != 0),"uchibou"]
+# train.saikyoukawagoe <- train[which(train.orig$saikyoukawagoe != 0),"saikyoukawagoe"]
+# 
+# length(train.tyuou)           # 3884
+# length(train.keihintohoku)    # 4104
+# length(train.keiyou)          # 1972
+# length(train.uchibou)         # 2035
+# length(train.saikyoukawagoe)  # 3357
+# 
+# # table(train.tyuou)
+# # train.tyuou
+# # 1    2    3 
+# # 2099 1450  335 
+# hist(train.tyuou)
+# 
+# # table(train.keihintohoku)
+# # train.keihintohoku
+# # 1    2    3 
+# # 2631 1211  262
+# hist(train.keihintohoku)
+# 
+# # table(train.keiyou)
+# # train.keiyou
+# # 1   2   3 
+# # 497 651 824 
+# hist(train.keiyou)
+# 
+# # table(train.uchibou)
+# # train.uchibou
+# # 1    2    3 
+# # 604  274 1427 
+# hist(train.uchibou)
+# 
+# # table(train.saikyoukawagoe)
+# # train.saikyoukawagoe
+# # 1    2    3 
+# # 1715  915  727 
+# hist(train.saikyoukawagoe)
+# 
+# # train$datetime <- as.POSIXlt(train$datetime)
 
 # 気温データ ====
-# temperature <- read.csv("./data/temperature.csv"
-# temperature <- read.csv("/Users/r-ogata/Desktop/deepanalytics/temperature.csv"
-# temperature <- read.csv("~/Desktop/deepanalytics/temperature.csv"
-#                ,header=FALSE, stringsAsFactors=FALSE, fileEncoding="utf-8")
-# dim(temperature)
-# [1] 17093352        6
-#
-# names(temperature) <- c("datetime", "centralid", "municipality", "datatype", "quality", "temperature")
-#
-# centralid 毎にファイルに保存
-# splitsave(temperature)
-# sapply(temperature, function(x) sum(is.na(x)))
 
 makeTemperature <- function(vector){
   makeDF("temperature", vector) %>%
@@ -222,18 +132,6 @@ temperature.saikyoukawagoe <- makeTemperature(centralid.saikyoukawagoe)
 
 
 # 降水量データ ====
-# precipitation <- read.csv("/Users/r-ogata/Desktop/deepanalytics/precipitation.csv"
-# precipitation <- read.csv("./data/precipitation.csv"
-# precipitation <- read.csv("~/Desktop/deepanalytics/precipitation.csv"
-#                 ,header=FALSE, stringsAsFactors=FALSE, fileEncoding="utf-8")
-# dim(precipitation)
-# [1] 13726958        6
-#
-# names(precipitation) <- c("datetime", "centralid", "municipality", "datatype", "quality", "precipitation")
-#
-# centralid 毎にファイルに保存
-# splitsave(precipitation)
-# sapply(precipitation, function(x) sum(is.na(x)))
 
 # 
 makePrecipitation <- function(vector){
@@ -260,16 +158,6 @@ precipitation.saikyoukawagoe <- makePrecipitation(centralid.saikyoukawagoe)
 
  
 # 湿度データ ====
-# humidity <- read.csv("./data/humidity.csv"
-# humidity <- read.csv("~/Desktop/deepanalytics/humidity.csv"
-# humidity <- read.csv("/Users/r-ogata/Desktop/deepanalytics/humidity.csv"
-#                ,header=FALSE, stringsAsFactors=FALSE, fileEncoding="utf-8")
-# 
-# names(humidity) <- c("datetime", "centralid", "municipality", "datatype", "quality", "humidity")
-#
-# centralid 毎にファイルに保存
-# splitsave(humidity)
-# sapply(humidity, function(x) sum(is.na(x)))
 
 # 
 makeHumidity <- function(vector){
@@ -295,38 +183,7 @@ humidity.uchibou <- makeHumidity(centralid.uchibou)
 humidity.saikyoukawagoe <- makeHumidity(centralid.saikyoukawagoe)
 
 
-# 雷データ ====
-#thunder <- read.csv("./data/thunder.csv"
-#thunder <- read.csv("/Users/r-ogata/Desktop/deepanalytics/thunder.csv"
-thunder <- read.csv("~/Desktop/deepanalytics/thunder.csv"
-                ,header=FALSE, stringsAsFactors=FALSE, fileEncoding="utf-8")
-# dim(thunder)
-# [1] 125787      4
-names(thunder) <- c("datetime", "latitude", "longitude", "kind")
-sapply(thunder, function(x) sum(is.na(x)))
-
-thunder$datetime <- as.POSIXlt(thunder$datetime)
-thunder$align <- xts::align.time(thunder$datetime - 10*60, 10*60)
-
-# http://qiita.com/tktz/items/733c37b1d6102ae52120
-
-
-write.table(thunder, file = "~/Desktop/deepanalytics/thundermap.csv", sep = ",", row.names = FALSE, append = FALSE, quote = FALSE)
-
-
 # 風速データ ====
-# windspeed <- read.csv("./data/wind.csv"
-# windspeed <- read.csv("~/Desktop/deepanalytics/wind.csv"
-# windspeed <- read.csv("/Users/r-ogata/Desktop/deepanalytics/wind.csv"
-#               ,header=FALSE, stringsAsFactors=FALSE, fileEncoding="utf-8")
-# dim(windspeed)
-# [1] 15532645        6
-# names(windspeed) <- c("datetime", "centralid", "municipality", "datatype", "quality", "windspeed")
-#
-# centralid 毎にファイルに保存
-# splitsave(windspeed)
-#
-# sapply(windspeed, function(x) sum(is.na(x)))
 
 # 
 makeWindspeed <- function(vector){
@@ -352,55 +209,9 @@ windspeed.uchibou <- makeWindspeed(centralid.uchibou)
 windspeed.saikyoukawagoe <- makeWindspeed(centralid.saikyoukawagoe)
 
 
-# 風向データ(風向16方位) ====
-# wind_direction16 <- read.csv("./data/wind_dir.csv"
-# wind_direction16 <- read.csv("~/Desktop/deepanalytics/wind_dir.csv"
-# wind_direction16 <- read.csv("/Users/r-ogata/Desktop/deepanalytics/wind_dir.csv"
-#               ,header=FALSE, stringsAsFactors=FALSE, fileEncoding="utf-8")
-# dim(wind_direction16)
-# [1] 15611390        8
-# names(wind_direction16) <- c("datetime", "centralid", "municipality", "datatype", "quality", "degrees360", "direction16", "direction36")
-# sapply(wind_wind_dir, function(x) sum(is.na(x)))
-
-# centralid 毎にファイルに保存
-# splitsave(wind_direction16)
-
-# 
-makeWindDirection16 <- function(vector){
-  makeDF("wind_direction16", vector) %>%
-  dplyr::mutate_at(vars(direction16), as.numeric) %>%
-  reshape2::dcast(., datetime ~ centralid, value.var = "direction16") %>%
-  add10minute(.) %>%
-  data.frame(.
-           ,datetime = dplyr::select(., c(datetime))
-           ,direction16 = dplyr::select(., c(direction16))
-           ,stringsAsFactors = FALSE
-  ) %>%
-  dplyr::select(.,c(datetime, direction16))
-}
-
-# 学習用路線毎の降水量データの作成 
-wind_direction16.tyuou <- makeWindDirection16(centralid.tyuou)
-wind_direction16.keihintohoku <- makeWindDirection16(centralid.keihintohoku)
-wind_direction16.keiyou <- makeWindDirection16(centralid.keiyou)
-wind_direction16.uchibou <- makeWindDirection16(centralid.uchibou)
-wind_direction16.saikyoukawagoe <- makeWindDirection16(centralid.saikyoukawagoe)
-
-
 # 最大瞬間風速データ(最大瞬間風速) ====
-# mwgs <- read.csv("./data/wind_max.csv"
-# mwgs <- read.csv("~/Desktop/deepanalytics/wind_max.csv"
-# mwgs <- read.csv("/Users/r-ogata/Desktop/deepanalytics/wind_max.csv"
-#              ,header=FALSE, stringsAsFactors=FALSE, fileEncoding="utf-8")
-# dim(mwgs)
-# [1] 15612256       10
-# names(mwgs) <- c("datetime", "centralid", "municipality", "datatype", "quality",
-#                    "mwgs", "degrees360", "exact_datetime", "direction16", "direction36")
-# centralid 毎にファイルに保存
-# splitsave(mwgs)
-#
-# sapply(mwgs, function(x) sum(is.na(x)))
 
+#
 makeMwgs <- function(vector){
   makeDF("mwgs", vector) %>%
   dplyr::mutate_at(vars(mwgs), as.numeric) %>%
@@ -481,9 +292,6 @@ train <-  rbind(train.tyuou, train.keihintohoku) %>%
   rbind(., train.uchibou) %>%
   rbind(., train.saikyoukawagoe)
 
-# 不要なオブジェクトの削除
-rm(list = ls(pattern = "mwgs|precipitation|temperature|windspeed|humidity|train."))
-
 
 if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
   # 実行環境が Mac の場合
@@ -491,6 +299,9 @@ if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
 } else if ( length(grep("windows", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
   # 実行環境が Windows の場合
   SAVE_DIR = paste0("/Users/r-ogata/Desktop/deepanalytics/train.edited.csv")
-} 
+} else if ( length(grep("Ubuntu", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
+  # 実行環境が Ubuntu の場合
+  SAVE_DIR = paste0("data/train.edited.csv")
+}
 
 write.table(train , file = SAVE_DIR, sep = ",", row.names = FALSE, append = FALSE, quote = FALSE)

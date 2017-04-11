@@ -5,63 +5,11 @@ require(dplyr)
 # 指数表示の回避
 options(scipen=10)
 
-# function ----------------------------------------------------------------
+source("script/R/fun/functions.R")
+source("variables.R")
 
-# 列:datetime に 10 分加算した data.frame を返す
-add10minute <- function(dataframe){
-  dataframe$datetime <- as.character(as.POSIXlt(dataframe$datetime) + 600)
-  return(dataframe)
-}
-
-# 気象データ区分(温度, 湿度, etc ) と路線の ID を入力して、data.frame を作成する
-makeDF <- function(weatherdata, centralid){
-  # 
-  for(i in centralid){
-    if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
-      # 実行環境が Mac の場合
-      FILE = paste0("/Users/ryo/Desktop/deepanalytics/", weatherdata, "/", weatherdata, ".", i, ".csv")
-    } else if ( length(grep("windows", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
-      # 実行環境が Windows の場合
-      FILE = paste0("/Users/r-ogata/Desktop/deepanalytics/", weatherdata, "/", weatherdata, ".", i, ".csv")
-    } 
-    
-    df.name <- paste0(weatherdata, "." , i)
-    assign(x = df.name, value = read.csv(FILE, header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8"))
-  }
-  n <- length(centralid)
-  tmp.name <- paste0(weatherdata, ".", centralid[1])
-  tmp <- eval(parse(text = tmp.name))
-  for(i in 2:n){
-    tmp.name <- paste0(weatherdata, ".", centralid[i])
-    tmp <- rbind(tmp, eval(parse(text = tmp.name)))
-  }
-  return(tmp)
-}
-
-# 前後の値の平均を求める
-dataCompletion <- function(dataframe, colname, rownumber){
-  if ( is.na(dataframe[rownumber - 1, colname]) == FALSE || is.na(dataframe[rownumber + 1, colname]) == FALSE ){
-    result <- mean(c(dataframe[rownumber - 1, colname], dataframe[rownumber + 1, colname]), na.rm = TRUE)
-  } else {
-    result <- NA
-  }
-  return(result)
-}
-
-
-# variable ====
-centralid.sotobou <- c(33129448, 33129576, 33129135)
-centralid.yamanote <- c(2030130001, 33139659, 2030130002, 33130167)
-centralid.utsunomiya <- c(33094345, 33099131, 33099252, 33094030, 33094340, 33089175, 33114247, 33114285, 33110164, 33130167)
-centralid.shounanshinjuku <- c(33144016, 33149220, 33139659, 2030130001, 33110164, 33140537, 33114285, 33119753, 33109203)
-centralid.takasaki <- c(33114285, 33119753, 33109203)
 
 # モデル学習用支障データ ====
-# train.orig <- read.csv("./data/train.csv"
-train.orig <- read.csv("~/Desktop/deepanalytics/train.csv"
-# train.orig <- read.csv("/Users/r-ogata/Desktop/deepanalytics/train.csv"
-                       ,header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8")
-
 if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
   # 実行環境が Mac の場合
   train.orig <- read.csv("~/Desktop/deepanalytics/train.csv"
@@ -70,7 +18,11 @@ if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
   # 実行環境が Windows の場合
   train.orig <- read.csv("/Users/r-ogata/Desktop/deepanalytics/train.csv"
                          ,header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8")
-} 
+} else if ( length(grep("Ubuntu", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
+  # 実行環境が Ubuntu の場合
+  train.orig <- read.csv("./data/train.csv"
+                         ,header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8")
+}
 
 
 # 気温データ ====
@@ -80,12 +32,15 @@ sotobou <- makeDF("temperature", centralid.sotobou)
 sotobou$temperature <- as.numeric(sotobou$temperature)
 sotobou.na <- which(is.na(sotobou$temperature))
 
+dim(sotobou)
+
 sapply(sotobou, function(x) sum(is.na(x)))
 
 for(i in sotobou.na){
   sotobou[i,"temperature"] <- dataCompletion(sotobou, "temperature", i) 
 }
 
+sotobou[apply(sotobou, 1, function(x){anyNA(x)}),]
 sapply(sotobou, function(x) sum(is.na(x)))
 
 temperature.sotobou <- sotobou %>%
@@ -99,6 +54,11 @@ temperature.sotobou <- sotobou %>%
              ,stringsAsFactors = FALSE
   ) %>%
   dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean))
+
+sapply(temperature.sotobou, function(x) sum(is.na(x)))
+
+dim(temperature.sotobou)
+# [1] 78768     4
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^sotobou$"))
@@ -128,6 +88,11 @@ temperature.yamanote <- yamanote %>%
              ,stringsAsFactors = FALSE
   ) %>%
   dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean))
+
+sapply(temperature.yamanote, function(x) sum(is.na(x)))
+
+dim(temperature.yamanote)
+# [1] 78768     4
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^yamanote$"))
@@ -161,6 +126,9 @@ temperature.utsunomiya <- utsunomiya %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^utsunomiya$"))
 
+dim(temperature.utsunomiya)
+# [1] 78768     4
+
 
 # 湘南新宿ライン
 shounanshinjuku <- makeDF("temperature", centralid.shounanshinjuku )
@@ -190,11 +158,17 @@ temperature.shounanshinjuku <- shounanshinjuku %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^shounanshinjuku$"))
 
+dim(temperature.shounanshinjuku)
+# [1] 78768     4
 
-# 高崎線
+
+# 高崎線 ( 要データ修正 ) ----
 takasaki <- makeDF("temperature", centralid.takasaki)
 takasaki$temperature <- as.numeric(takasaki$temperature)
 takasaki.na <- which(is.na(takasaki$temperature))
+
+dim(takasaki)
+# [1] 235955      6
 
 sapply(takasaki, function(x) sum(is.na(x)))
 
@@ -204,8 +178,22 @@ for(i in takasaki.na){
 
 sapply(takasaki, function(x) sum(is.na(x)))
 
+# temperature.takasaki <- takasaki %>%
+#   reshape2::dcast(., datetime ~ centralid, value.var = "temperature") %>%
+#   add10minute(.) %>%
+#   data.frame(.
+#              ,datetime = dplyr::select(., c(datetime))
+#              ,temperature.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
+#              ,temperature.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
+#              ,temperature.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+#              ,stringsAsFactors = FALSE
+#   ) %>%
+#   dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean))
+
 temperature.takasaki <- takasaki %>%
   reshape2::dcast(., datetime ~ centralid, value.var = "temperature") %>%
+  full_join(data.frame(datetime = train.orig[,"datetime"], stringsAsFactors = FALSE)
+            ,. , by = "datetime") %>%
   add10minute(.) %>%
   data.frame(.
              ,datetime = dplyr::select(., c(datetime))
@@ -216,16 +204,28 @@ temperature.takasaki <- takasaki %>%
   ) %>%
   dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean))
 
+temperature.takasaki[apply(temperature.takasaki, 1, function(x){anyNA(x)}),]
+
+temperature.takasaki.na <- which(is.na(temperature.takasaki$temperature))
+
+
+
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^takasaki$"))
+
+dim(temperature.takasaki)
+# [1] 78746     4
 
 
 # 降水量データ ====
 
-# 外房線
+# 外房線 ( 要データ修正 ) ----
 sotobou <- makeDF("precipitation", centralid.sotobou)
 sotobou$precipitation <- as.numeric(sotobou$precipitation)
 sotobou.na <- which(is.na(sotobou$precipitation))
+
+dim(sotobou)
+# [1] 236229      6
 
 sapply(sotobou, function(x) sum(is.na(x)))
 
@@ -247,13 +247,22 @@ precipitation.sotobou <- sotobou %>%
   ) %>%
   dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean))
 
+sapply(precipitation.sotobou, function(x) sum(is.na(x)))
+
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^sotobou$"))
 
-# 山手線
+dim(precipitation.sotobou)
+# [1] 78756     4
+
+
+# 山手線 ( 要データ修正 ) ----
 yamanote <- makeDF("precipitation", centralid.yamanote)
 yamanote$precipitation <- as.numeric(yamanote$precipitation)
 yamanote.na <- which(is.na(yamanote$precipitation))
+
+dim(yamanote)
+# [1] 314382      6
 
 sapply(yamanote, function(x) sum(is.na(x)))
 
@@ -278,11 +287,17 @@ precipitation.yamanote <- yamanote %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^yamanote$"))
 
+dim(precipitation.yamanote)
+# [1] 78757     4
 
-# 宇都宮線
+
+# 宇都宮線 ( 要データ修正 ) ----
 utsunomiya <- makeDF("precipitation", centralid.utsunomiya)
 utsunomiya$precipitation <- as.numeric(utsunomiya$precipitation)
 utsunomiya.na <- which(is.na(utsunomiya$precipitation))
+
+dim(utsunomiya)
+# [1] 787122      6
 
 sapply(utsunomiya, function(x) sum(is.na(x)))
 
@@ -307,8 +322,11 @@ precipitation.utsunomiya <- utsunomiya %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^utsunomiya$"))
 
+dim(precipitation.utsunomiya)
+# [1] 78757     4
 
-# 湘南新宿ライン
+
+# 湘南新宿ライン ( 要データ修正 ) ----
 shounanshinjuku <- makeDF("precipitation", centralid.shounanshinjuku )
 shounanshinjuku$precipitation <- as.numeric(shounanshinjuku$precipitation)
 shounanshinjuku.na <- which(is.na(shounanshinjuku$precipitation))
@@ -336,8 +354,11 @@ precipitation.shounanshinjuku <- shounanshinjuku %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^shounanshinjuku$"))
 
+dim(precipitation.shounanshinjuku)
+# [1] 78757     4
 
-# 高崎線
+
+# 高崎線 ( 要データ修正 ) ----
 takasaki <- makeDF("precipitation", centralid.takasaki)
 takasaki$precipitation <- as.numeric(takasaki$precipitation)
 takasaki.na <- which(is.na(takasaki$precipitation))
@@ -364,6 +385,9 @@ precipitation.takasaki <- takasaki %>%
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^takasaki$"))
+
+dim(precipitation.takasaki)
+# [1] 78735     4
 
 
 # 湿度データ ====
@@ -396,6 +420,9 @@ humidity.sotobou <- sotobou %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^sotobou$"))
 
+dim(humidity.sotobou)
+# [1] 78768     4
+
 
 # 山手線
 yamanote <- makeDF("humidity", centralid.yamanote)
@@ -424,6 +451,9 @@ humidity.yamanote <- yamanote %>%
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^yamanote$"))
+
+dim(humidity.yamanote)
+# [1] 78768     4
 
 
 # 宇都宮線
@@ -454,6 +484,9 @@ humidity.utsunomiya <- utsunomiya %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^utsunomiya$"))
 
+dim(humidity.utsunomiya)
+# [1] 78768     4
+
 
 # 湘南新宿ライン
 shounanshinjuku <- makeDF("humidity", centralid.shounanshinjuku )
@@ -483,8 +516,11 @@ humidity.shounanshinjuku <- shounanshinjuku %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^shounanshinjuku$"))
 
+dim(humidity.shounanshinjuku)
+# [1] 78768     4
 
-# 高崎線
+
+# 高崎線 ( 要データ修正 ) ----
 takasaki <- makeDF("humidity", centralid.takasaki)
 takasaki$humidity <- as.numeric(takasaki$humidity)
 takasaki.na <- which(is.na(takasaki$humidity))
@@ -511,6 +547,9 @@ humidity.takasaki <- takasaki %>%
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^takasaki$"))
+
+dim(humidity.takasaki)
+# [1] 78746     4
 
 
 # 風速データ ====
@@ -543,6 +582,9 @@ windspeed.sotobou <- sotobou %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^sotobou$"))
 
+dim(windspeed.sotobou)
+# [1] 78768     4
+
 
 # 山手線
 yamanote <- makeDF("windspeed", centralid.yamanote)
@@ -571,6 +613,9 @@ windspeed.yamanote <- yamanote %>%
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^yamanote$"))
+
+dim(windspeed.yamanote)
+# [1] 78768     4
 
 
 # 宇都宮線
@@ -601,6 +646,9 @@ windspeed.utsunomiya <- utsunomiya %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^utsunomiya$"))
 
+dim(windspeed.utsunomiya)
+# [1] 78768     4
+
 
 # 湘南新宿ライン
 shounanshinjuku <- makeDF("windspeed", centralid.shounanshinjuku )
@@ -630,8 +678,11 @@ windspeed.shounanshinjuku <- shounanshinjuku %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^shounanshinjuku$"))
 
+dim(windspeed.shounanshinjuku)
+# [1] 78768     4
 
-# 高崎線
+
+# 高崎線 ( 要データ修正 ) ----
 takasaki <- makeDF("windspeed", centralid.takasaki)
 takasaki$windspeed <- as.numeric(takasaki$windspeed)
 takasaki.na <- which(is.na(takasaki$windspeed))
@@ -659,10 +710,13 @@ windspeed.takasaki <- takasaki %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^takasaki$"))
 
+dim(windspeed.takasaki)
+# [1] 78746     4
+
 
 # 最大瞬間風速データ(最大瞬間風速) ====
 
-# 外房線
+# 外房線 ( 要データ修正 ) ----
 sotobou <- makeDF("mwgs", centralid.sotobou)
 sotobou$mwgs <- as.numeric(sotobou$mwgs)
 sotobou.na <- which(is.na(sotobou$mwgs))
@@ -690,8 +744,11 @@ mwgs.sotobou <- sotobou %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^sotobou$"))
 
+dim(mwgs.sotobou)
+# [1] 78756     4
 
-# 山手線
+
+# 山手線 ( 要データ修正 ) ----
 yamanote <- makeDF("mwgs", centralid.yamanote)
 yamanote$mwgs <- as.numeric(yamanote$mwgs)
 yamanote.na <- which(is.na(yamanote$mwgs))
@@ -719,8 +776,11 @@ mwgs.yamanote <- yamanote %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^yamanote$"))
 
+dim(mwgs.yamanote)
+# [1] 78757     4
 
-# 宇都宮線
+
+# 宇都宮線 ( 要データ修正 ) ----
 utsunomiya <- makeDF("mwgs", centralid.utsunomiya)
 utsunomiya$mwgs <- as.numeric(utsunomiya$mwgs)
 utsunomiya.na <- which(is.na(utsunomiya$mwgs))
@@ -748,8 +808,11 @@ mwgs.utsunomiya <- utsunomiya %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^utsunomiya$"))
 
+dim(mwgs.utsunomiya)
+# [1] 78757     4
 
-# 湘南新宿ライン
+
+# 湘南新宿ライン ( 要データ修正 ) ----
 shounanshinjuku <- makeDF("mwgs", centralid.shounanshinjuku )
 shounanshinjuku$mwgs <- as.numeric(shounanshinjuku$mwgs)
 shounanshinjuku.na <- which(is.na(shounanshinjuku$mwgs))
@@ -777,8 +840,11 @@ mwgs.shounanshinjuku <- shounanshinjuku %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^shounanshinjuku$"))
 
+dim(mwgs.shounanshinjuku)
+# [1] 78757     4
 
-# 高崎線
+
+# 高崎線 ( 要データ修正 )  ----
 takasaki <- makeDF("mwgs", centralid.takasaki)
 takasaki$mwgs <- as.numeric(takasaki$mwgs)
 takasaki.na <- which(is.na(takasaki$mwgs))
@@ -806,6 +872,9 @@ mwgs.takasaki <- takasaki %>%
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^takasaki$"))
 
+dim(mwgs.takasaki)
+# [1] 78735     4
+
 
 # データ結合 ====
 
@@ -830,6 +899,8 @@ if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
 
 test.sotobou$datetime <- paste0("sotobou_", test.sotobou$datetime)
 test.sotobou[1,-1] <- test.sotobou[2,-1]
+
+test.sotobou[apply(test.sotobou, 1, function(x){anyNA(x)}),]
 
 # write.table(test.sotobou, file = SAVE_DIR, sep = ",", row.names = FALSE, append = FALSE, quote = FALSE)
 
@@ -944,6 +1015,9 @@ if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
 } else if ( length(grep("windows", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
   # 実行環境が Windows の場合
   SAVE_DIR = paste0("/Users/r-ogata/Desktop/deepanalytics/test/test.csv")
-} 
+} else if ( length(grep("Ubuntu", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
+  # 実行環境が Ubuntu の場合
+  SAVE_DIR = paste0("test/test.csv")
+}
 
 write.table(test, file = SAVE_DIR, sep = ",", row.names = FALSE, append = FALSE, quote = FALSE)
