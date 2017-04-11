@@ -69,7 +69,6 @@ explanation_variable <- names(subset(TRAIN, select = -c(response, datetime)))
 
 minbucket_variable <- 100
 maxdepth_variable <- 14 
-cp_variable <- 0.00142
 
 cl <- makeCluster(detectCores(), type = 'PSOCK', outfile = " ")
 registerDoParallel(cl)
@@ -79,7 +78,7 @@ model_list <- caretList(
   ,y = TRAIN.TRAIN$response
   #,trControl = my_control
   ,trControl = doParallel
-  #,preProcess = my_preProcess
+  ,preProcess = my_preProcess
   ,tuneList = list(
     rpart = caretModelSpec(
       method = "rpart"
@@ -135,7 +134,7 @@ y_pred  <- dplyr::select(tp, c(good, human, mechanical, weather)) %>%
 MLmetrics::MultiLogLoss(y_true = tp$obs, y_pred = y_pred)
 
 # 結果の保存
-result.rpart.df <- rbind(result.rpart.df, summaryResult(model_list[[1]]))
+result.rpart.df <- rbind(result.rpart.df, summaryResult.LogLoss(model_list[[1]]))
 saveRDS(result.rpart.df, "result/result.rpart.df.data")
 
 # predict() を利用した検算 
@@ -155,7 +154,7 @@ if (is.null(model_list[[1]]$preProcess)){
     predict(model_list[[1]]$finalModel, .)
 }
 
-MLmetrics::MultiLogLoss(y_true = TRAIN.TEST$response, y_pred = pred_test.verification)
+MLmetrics::MultiLogLoss(y_true = TRAIN.TEST$response, y_pred = pred_test.verification$predictions)
 
 
 #
@@ -163,7 +162,7 @@ MLmetrics::MultiLogLoss(y_true = TRAIN.TEST$response, y_pred = pred_test.verific
 #
 if (is.null(model_list[[1]]$preProcess)){
   # preProcess を指定していない場合
-  pred_test <- predict(model_list[[1]]$finalModel, TEST, type = "prob")
+  pred_test <- predict(model_list[[1]]$finalModel, TEST, type = "response")
   
   PREPROCESS <- "no_preProcess"
 } else {
@@ -180,7 +179,7 @@ if (is.null(model_list[[1]]$preProcess)){
 
 #submitの形式で出力(CSV)
 #データ加工
-out <- data.frame(TEST$datetime, pred_test)
+out <- data.frame(TEST$datetime, pred_test$predictions)
 
 sapply(out, function(x) sum(is.na(x)))
 
@@ -195,7 +194,10 @@ for(NUM in 1:10){
   } else if ( length(grep("windows", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
     # 実行環境が Windows の場合
     SUBMIT_FILENAME <- paste("/Users/r-ogata/Desktop/deepanalytics/submit/submit_", DATE, "_", NUM, "_", PREPROCESS, "_rpart.csv", sep = "")
-  } 
+  } else if ( length(grep("Ubuntu", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
+    # 実行環境が Ubuntu の場合
+    SUBMIT_FILENAME <- paste("submit/submit_", DATE, "_", NUM, "_", PREPROCESS, "_rpart.csv", sep = "")
+  }
   
   
   if ( !file.exists(SUBMIT_FILENAME) ) {
