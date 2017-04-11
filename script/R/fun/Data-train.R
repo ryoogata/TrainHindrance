@@ -117,9 +117,10 @@ makeTemperature <- function(vector){
            ,temperature.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
            ,temperature.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
            ,temperature.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+           ,temperature.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
            ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean))
+  dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean, temperature.median))
 }
 
 
@@ -144,9 +145,10 @@ makePrecipitation <- function(vector){
            ,precipitation.max = apply(dplyr::select(., -c(datetime)), 1, max)
            ,precipitation.min = apply(dplyr::select(., -c(datetime)), 1, min)
            ,precipitation.mean = apply(dplyr::select(., -c(datetime)), 1, mean)
+           ,precipitation.median = apply(dplyr::select(., -c(datetime)), 1, median)
            ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean))
+  dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean, precipitation.median))
 }
 
 # 学習用路線毎の降水量データの作成 
@@ -170,9 +172,10 @@ makeHumidity <- function(vector){
            ,humidity.max = apply(dplyr::select(., -c(datetime)), 1, max)
            ,humidity.min = apply(dplyr::select(., -c(datetime)), 1, min)
            ,humidity.mean = apply(dplyr::select(., -c(datetime)), 1, mean)
+           ,humidity.median = apply(dplyr::select(., -c(datetime)), 1, median)
            ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, humidity.max, humidity.min, humidity.mean))
+  dplyr::select(.,c(datetime, humidity.max, humidity.min, humidity.mean, humidity.median))
 }
 
 # 学習用路線毎の湿度データの作成 
@@ -196,9 +199,10 @@ makeWindspeed <- function(vector){
            ,windspeed.max = apply(dplyr::select(., -c(datetime)), 1, max)
            ,windspeed.min = apply(dplyr::select(., -c(datetime)), 1, min)
            ,windspeed.mean = apply(dplyr::select(., -c(datetime)), 1, mean)
+           ,windspeed.median = apply(dplyr::select(., -c(datetime)), 1, median)
            ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, windspeed.max, windspeed.min, windspeed.mean))
+  dplyr::select(.,c(datetime, windspeed.max, windspeed.min, windspeed.mean, windspeed.median))
 }
 
 # 学習用路線毎の風速データの作成 
@@ -222,9 +226,10 @@ makeMwgs <- function(vector){
            ,mwgs.max = apply(dplyr::select(., -c(datetime)), 1, max)
            ,mwgs.min = apply(dplyr::select(., -c(datetime)), 1, min)
            ,mwgs.mean = apply(dplyr::select(., -c(datetime)), 1, mean)
+           ,mwgs.median = apply(dplyr::select(., -c(datetime)), 1, median)
            ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, mwgs.max, mwgs.min, mwgs.mean))
+  dplyr::select(.,c(datetime, mwgs.max, mwgs.min, mwgs.mean, mwgs.median))
 }
 
 # 学習用路線毎のデータの作成 

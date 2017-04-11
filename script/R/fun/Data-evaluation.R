@@ -51,9 +51,10 @@ temperature.sotobou <- sotobou %>%
              ,temperature.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,temperature.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,temperature.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,temperature.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean))
+  dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean, temperature.median))
 
 sapply(temperature.sotobou, function(x) sum(is.na(x)))
 
@@ -85,9 +86,10 @@ temperature.yamanote <- yamanote %>%
              ,temperature.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,temperature.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,temperature.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,temperature.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean))
+  dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean, temperature.median))
 
 sapply(temperature.yamanote, function(x) sum(is.na(x)))
 
@@ -119,9 +121,10 @@ temperature.utsunomiya <- utsunomiya %>%
              ,temperature.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,temperature.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,temperature.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,temperature.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean))
+  dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean, temperature.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^utsunomiya$"))
@@ -151,9 +154,10 @@ temperature.shounanshinjuku <- shounanshinjuku %>%
              ,temperature.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,temperature.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,temperature.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,temperature.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean))
+  dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean, temperature.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^shounanshinjuku$"))
@@ -178,31 +182,33 @@ for(i in takasaki.na){
 
 sapply(takasaki, function(x) sum(is.na(x)))
 
-# temperature.takasaki <- takasaki %>%
-#   reshape2::dcast(., datetime ~ centralid, value.var = "temperature") %>%
-#   add10minute(.) %>%
-#   data.frame(.
-#              ,datetime = dplyr::select(., c(datetime))
-#              ,temperature.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
-#              ,temperature.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
-#              ,temperature.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
-#              ,stringsAsFactors = FALSE
-#   ) %>%
-#   dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean))
-
 temperature.takasaki <- takasaki %>%
   reshape2::dcast(., datetime ~ centralid, value.var = "temperature") %>%
-  full_join(data.frame(datetime = train.orig[,"datetime"], stringsAsFactors = FALSE)
-            ,. , by = "datetime") %>%
   add10minute(.) %>%
   data.frame(.
              ,datetime = dplyr::select(., c(datetime))
              ,temperature.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,temperature.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,temperature.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,temperature.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean))
+  dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean, temperature.median))
+
+# temperature.takasaki <- takasaki %>%
+#   reshape2::dcast(., datetime ~ centralid, value.var = "temperature") %>%
+#   full_join(data.frame(datetime = train.orig[,"datetime"], stringsAsFactors = FALSE)
+#             ,. , by = "datetime") %>%
+#   add10minute(.) %>%
+#   data.frame(.
+#              ,datetime = dplyr::select(., c(datetime))
+#              ,temperature.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
+#              ,temperature.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
+#              ,temperature.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+#              ,temperature.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
+#              ,stringsAsFactors = FALSE
+#   ) %>%
+#   dplyr::select(.,c(datetime, temperature.max, temperature.min, temperature.mean, temperature.median))
 
 temperature.takasaki[apply(temperature.takasaki, 1, function(x){anyNA(x)}),]
 
@@ -243,9 +249,10 @@ precipitation.sotobou <- sotobou %>%
              ,precipitation.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,precipitation.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,precipitation.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,precipitation.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean))
+  dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean, precipitation.median))
 
 sapply(precipitation.sotobou, function(x) sum(is.na(x)))
 
@@ -280,9 +287,10 @@ precipitation.yamanote <- yamanote %>%
              ,precipitation.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,precipitation.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,precipitation.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,precipitation.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean))
+  dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean, precipitation.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^yamanote$"))
@@ -315,9 +323,10 @@ precipitation.utsunomiya <- utsunomiya %>%
              ,precipitation.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,precipitation.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,precipitation.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,precipitation.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean))
+  dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean, precipitation.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^utsunomiya$"))
@@ -347,9 +356,10 @@ precipitation.shounanshinjuku <- shounanshinjuku %>%
              ,precipitation.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,precipitation.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,precipitation.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,precipitation.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean))
+  dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean, precipitation.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^shounanshinjuku$"))
@@ -379,9 +389,10 @@ precipitation.takasaki <- takasaki %>%
              ,precipitation.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,precipitation.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,precipitation.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,precipitation.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean))
+  dplyr::select(.,c(datetime, precipitation.max, precipitation.min, precipitation.mean, precipitation.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^takasaki$"))
@@ -413,9 +424,10 @@ humidity.sotobou <- sotobou %>%
              ,humidity.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,humidity.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,humidity.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,humidity.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, humidity.max, humidity.min, humidity.mean))
+  dplyr::select(.,c(datetime, humidity.max, humidity.min, humidity.mean, humidity.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^sotobou$"))
@@ -445,9 +457,10 @@ humidity.yamanote <- yamanote %>%
              ,humidity.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,humidity.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,humidity.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,humidity.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, humidity.max, humidity.min, humidity.mean))
+  dplyr::select(.,c(datetime, humidity.max, humidity.min, humidity.mean, humidity.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^yamanote$"))
@@ -477,9 +490,10 @@ humidity.utsunomiya <- utsunomiya %>%
              ,humidity.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,humidity.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,humidity.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,humidity.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, humidity.max, humidity.min, humidity.mean))
+  dplyr::select(.,c(datetime, humidity.max, humidity.min, humidity.mean, humidity.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^utsunomiya$"))
@@ -509,9 +523,10 @@ humidity.shounanshinjuku <- shounanshinjuku %>%
              ,humidity.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,humidity.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,humidity.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,humidity.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, humidity.max, humidity.min, humidity.mean))
+  dplyr::select(.,c(datetime, humidity.max, humidity.min, humidity.mean, humidity.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^shounanshinjuku$"))
@@ -541,9 +556,10 @@ humidity.takasaki <- takasaki %>%
              ,humidity.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,humidity.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,humidity.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,humidity.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, humidity.max, humidity.min, humidity.mean))
+  dplyr::select(.,c(datetime, humidity.max, humidity.min, humidity.mean, humidity.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^takasaki$"))
@@ -575,9 +591,10 @@ windspeed.sotobou <- sotobou %>%
              ,windspeed.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,windspeed.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,windspeed.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,windspeed.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, windspeed.max, windspeed.min, windspeed.mean))
+  dplyr::select(.,c(datetime, windspeed.max, windspeed.min, windspeed.mean, windspeed.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^sotobou$"))
@@ -607,9 +624,10 @@ windspeed.yamanote <- yamanote %>%
              ,windspeed.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,windspeed.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,windspeed.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,windspeed.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, windspeed.max, windspeed.min, windspeed.mean))
+  dplyr::select(.,c(datetime, windspeed.max, windspeed.min, windspeed.mean, windspeed.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^yamanote$"))
@@ -639,9 +657,10 @@ windspeed.utsunomiya <- utsunomiya %>%
              ,windspeed.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,windspeed.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,windspeed.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,windspeed.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, windspeed.max, windspeed.min, windspeed.mean))
+  dplyr::select(.,c(datetime, windspeed.max, windspeed.min, windspeed.mean, windspeed.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^utsunomiya$"))
@@ -671,9 +690,10 @@ windspeed.shounanshinjuku <- shounanshinjuku %>%
              ,windspeed.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,windspeed.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,windspeed.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,windspeed.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, windspeed.max, windspeed.min, windspeed.mean))
+  dplyr::select(.,c(datetime, windspeed.max, windspeed.min, windspeed.mean, windspeed.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^shounanshinjuku$"))
@@ -703,9 +723,10 @@ windspeed.takasaki <- takasaki %>%
              ,windspeed.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,windspeed.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,windspeed.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,windspeed.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, windspeed.max, windspeed.min, windspeed.mean))
+  dplyr::select(.,c(datetime, windspeed.max, windspeed.min, windspeed.mean, windspeed.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^takasaki$"))
@@ -737,9 +758,10 @@ mwgs.sotobou <- sotobou %>%
              ,mwgs.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,mwgs.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,mwgs.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,mwgs.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, mwgs.max, mwgs.min, mwgs.mean))
+  dplyr::select(.,c(datetime, mwgs.max, mwgs.min, mwgs.mean, mwgs.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^sotobou$"))
@@ -769,9 +791,10 @@ mwgs.yamanote <- yamanote %>%
              ,mwgs.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,mwgs.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,mwgs.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,mwgs.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, mwgs.max, mwgs.min, mwgs.mean))
+  dplyr::select(.,c(datetime, mwgs.max, mwgs.min, mwgs.mean, mwgs.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^yamanote$"))
@@ -801,9 +824,10 @@ mwgs.utsunomiya <- utsunomiya %>%
              ,mwgs.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,mwgs.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,mwgs.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,mwgs.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, mwgs.max, mwgs.min, mwgs.mean))
+  dplyr::select(.,c(datetime, mwgs.max, mwgs.min, mwgs.mean, mwgs.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^utsunomiya$"))
@@ -833,9 +857,10 @@ mwgs.shounanshinjuku <- shounanshinjuku %>%
              ,mwgs.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,mwgs.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,mwgs.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,mwgs.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, mwgs.max, mwgs.min, mwgs.mean))
+  dplyr::select(.,c(datetime, mwgs.max, mwgs.min, mwgs.mean, mwgs.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^shounanshinjuku$"))
@@ -865,9 +890,10 @@ mwgs.takasaki <- takasaki %>%
              ,mwgs.max = apply(dplyr::select(., -c(datetime)), 1, max, na.rm = TRUE)
              ,mwgs.min = apply(dplyr::select(., -c(datetime)), 1, min, na.rm = TRUE)
              ,mwgs.mean = apply(dplyr::select(., -c(datetime)), 1, mean, na.rm = TRUE)
+             ,mwgs.median = apply(dplyr::select(., -c(datetime)), 1, median, na.rm = TRUE)
              ,stringsAsFactors = FALSE
   ) %>%
-  dplyr::select(.,c(datetime, mwgs.max, mwgs.min, mwgs.mean))
+  dplyr::select(.,c(datetime, mwgs.max, mwgs.min, mwgs.mean, mwgs.median))
 
 # 不要なオブジェクトの削除
 rm(list = ls(pattern = "^takasaki$"))
