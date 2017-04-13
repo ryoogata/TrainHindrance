@@ -105,6 +105,23 @@ if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
 # 
 # # train$datetime <- as.POSIXlt(train$datetime)
 
+# 日付データ ====
+
+# install.packages("Nippon", repos = "cran.ism.ac.jp")
+
+datetime <- read.csv("datetime.csv"
+                     ,header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8")
+
+datetime$datetime <- as.POSIXlt(datetime$datetime)
+
+datetime$month <- datetime$datetime$mon + 1 # 月
+datetime$day <- datetime$datetime$mday # 日
+datetime$hour <- datetime$datetime$hour # 時間
+datetime$wday <- datetime$datetime$wday # 曜日
+datetime$holiday <- Nippon::is.jholiday(as.Date(datetime$datetime)) # 祝日
+datetime[which(datetime$holiday == TRUE),"holiday"] <- 1 # 祝日: 1
+
+
 # 気温データ ====
 
 makeTemperature <- function(vector){
