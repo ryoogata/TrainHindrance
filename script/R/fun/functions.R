@@ -1,3 +1,16 @@
+checkdata <- function(dataframe){
+  print("dim(dataframe) ----")
+  print(dim(dataframe))
+  Str <- readline("Enter : ")
+  
+  print("sapply(dataframe, function(x) sum(is.na(x))) ----")
+  print(sapply(dataframe, function(x) sum(is.na(x))))
+  Str <- readline("Enter : ")
+  
+  print("dataframe[apply(dataframe, 1, function(x){anyNA(x)}),] ----")
+  print(dataframe[apply(dataframe, 1, function(x){anyNA(x)}),])
+}
+
 splitsave <- function(dataframe){
   
   datetime <- read.csv("datetime.csv"

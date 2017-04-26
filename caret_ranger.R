@@ -92,7 +92,7 @@ model_list <- caretList(
     fit.ranger = caretModelSpec(
       method = "ranger"
       ,metric = "logLoss" 
-      ,tuneGrid = expand.grid(mtry = c(1:5))
+      ,tuneGrid = expand.grid(mtry = c(5))
       ,importance = 'impurity'
     )
   )

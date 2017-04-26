@@ -1,6 +1,5 @@
 require(caret)
 require(caretEnsemble)
-require(pROC)
 require(doParallel)
 
 require(glmnet)
@@ -95,10 +94,16 @@ model_list <- caretList(
       ,metric = "logLoss"
       ,family = "multinomial"
       ,tuneGrid = expand.grid(
+                               alpha = 0.01
+                               ,lambda = 0.01
                               # alpha = 1:5 * 0.1
                               # ,lambda = 10^{1:5 * -1}
-                              alpha = 1:5 * 0.01
-                              ,lambda = 1:5 * 0.01
+                              # alpha = 1:5 * 0.01
+                              # ,lambda = 1:5 * 0.01
+                              # alpha = c(0.006, 0.007, 0.008, 0.009, 0.01, 0.011, 0.012, 0.013, 0.015, 0.016)
+                              # ,lambda = c(0.006, 0.007, 0.008, 0.009, 0.01, 0.011, 0.012, 0.013, 0.015, 0.016)
+                              #alpha = c(0.006, 0.007, 0.008, 0.009, 0.01)
+                              #,lambda = c(0.006, 0.007, 0.008, 0.009, 0.01)
                              )
     )
   )
@@ -170,12 +175,15 @@ if (is.null(model_list[[1]]$preProcess)){
     )
 }
 
-MLmetrics::MultiLogLoss(y_true = TRAIN.TEST$response, y_pred = pred_test.verification)
+y_pred  <- data.frame(pred_test.verification) %>%
+  as.matrix(.)
+
+MLmetrics::MultiLogLoss(y_true = TRAIN.TEST$response, y_pred = y_pred)
 
 
 
 #
-# データにモデルの当てはめ
+# 評価用データにモデルの当てはめ
 #
 if (is.null(model_list[[1]]$preProcess)){
   # preProcess を指定していない場合

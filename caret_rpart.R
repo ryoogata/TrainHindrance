@@ -78,7 +78,7 @@ model_list <- caretList(
   ,y = TRAIN.TRAIN$response
   #,trControl = my_control
   ,trControl = doParallel
-  ,preProcess = my_preProcess
+  #,preProcess = my_preProcess
   ,tuneList = list(
     rpart = caretModelSpec(
       method = "rpart"
@@ -110,6 +110,7 @@ model_list[[1]]$finalModel$variable.importance
 varImp(model_list[[1]], scale = FALSE, useModel = FALSE)
 varImp(model_list[[1]], scale = FALSE)
 plot(varImp(model_list[[1]], scale = FALSE))
+plot(varImp(model_list[[1]], scale = FALSE, useModel = FALSE))
 
 ggplot(model_list[[1]]) 
 
@@ -162,7 +163,7 @@ MLmetrics::MultiLogLoss(y_true = TRAIN.TEST$response, y_pred = pred_test.verific
 #
 if (is.null(model_list[[1]]$preProcess)){
   # preProcess を指定していない場合
-  pred_test <- predict(model_list[[1]]$finalModel, TEST, type = "response")
+  pred_test <- predict(model_list[[1]]$finalModel, TEST, type = "prob")
   
   PREPROCESS <- "no_preProcess"
 } else {
@@ -179,7 +180,7 @@ if (is.null(model_list[[1]]$preProcess)){
 
 #submitの形式で出力(CSV)
 #データ加工
-out <- data.frame(TEST$datetime, pred_test$predictions)
+out <- data.frame(TEST$datetime, pred_test)
 
 sapply(out, function(x) sum(is.na(x)))
 

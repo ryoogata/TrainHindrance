@@ -26,10 +26,21 @@ dim(sample_submit)
 
 
 # 気象観測地点情報ファイル ====
-observation_point <- read.csv("./data/observation_point.tsv"
-# observation_point <- read.csv("~/Desktop/deepanalytics/observation_point.tsv"
-# observation_point <- read.csv("/Users/r-ogata/Desktop/deepanalytics/observation_point.tsv"
+if ( length(grep("os x", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
+  # 実行環境が Mac の場合
+  observation_point <- read.csv("~/Desktop/deepanalytics/observation_point.tsv"
                ,header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8", sep = "\t")
+} else if ( length(grep("windows", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
+  # 実行環境が Windows の場合
+  observation_point <- read.csv("/Users/r-ogata/Desktop/deepanalytics/observation_point.tsv"
+               ,header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8", sep = "\t")
+} else if ( length(grep("Ubuntu", ignore.case = TRUE, sessionInfo()$running)) != 0 ) {
+  # 実行環境が Ubuntu の場合
+  observation_point <- read.csv("./data/observation_point.tsv"
+               ,header=TRUE, stringsAsFactors=FALSE, fileEncoding="utf-8", sep = "\t")
+}
+
+
 dim(observation_point)
 # [1] 219  12
 # 

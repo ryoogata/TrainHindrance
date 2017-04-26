@@ -1,13 +1,12 @@
 require(caret)
 require(caretEnsemble)
-require(pROC)
 require(doParallel)
 
 require(xgboost)
 require(Matrix)
 
 source("script/R/fun/tools.R")
-result.rpart.df <- readRDS("result/result.rpart.df.data")
+result.xgbLinear.df <- readRDS("result/result.xgbLinear.df.data")
 
 #
 # 前処理
@@ -59,7 +58,7 @@ doParallel <- trainControl(
   ,allowParallel=TRUE
   ,verboseIter=TRUE
   ,savePredictions = "final"
-  #,index = createResample(TRAIN.TRAIN$response, 10)
+  ,index = createResample(TRAIN.TRAIN$response, 10)
   #,seeds = seeds
 )
 
@@ -79,8 +78,8 @@ model_list <- caretList(
       method = "xgbLinear"
       ,metric = "logLoss" 
       ,label = TRAIN.TRAIN$response
-      ,objective = "multi:softmax"
-      ,num_class = 4
+      # ,objective = "multi:softmax"
+      # ,num_class = 4
       ,tuneGrid = expand.grid(
         nrounds = c(50)
         ,lambda = c(.3)
@@ -132,8 +131,8 @@ MLmetrics::MultiLogLoss(y_true = tp$obs, y_pred = y_pred)
 
 
 # 結果の保存
-result.rpart.df <- rbind(result.rpart.df, summaryResult(model_list[[1]]))
-saveRDS(result.rpart.df, "result/result.rpart.df.data")
+result.xgbLinear.df <- rbind(result.xgbLinear.df, summaryResult(model_list[[1]]))
+saveRDS(result.xgbLinear.df, "result/result.xgbLinear.df.data")
 
 # predict() を利用した検算 
 if (is.null(model_list[[1]]$preProcess)){
@@ -142,6 +141,7 @@ if (is.null(model_list[[1]]$preProcess)){
     model_list[[1]]$finalModel
     #,unlist(subset(TRAIN.TEST, select = -c(response,datetime)))
     ,as.matrix(subset(TRAIN.TEST, select = -c(response,datetime)))
+    ,type = "response"
   )
 } else {
   # preProcess を指定している場合
@@ -185,7 +185,7 @@ names(out) <- c("id","pred")
 # 予測データを保存
 for(NUM in 1:10){
   DATE <- format(jrvFinance::edate(from = Sys.Date(), 0), "%Y%m%d")
-  SUBMIT_FILENAME <- paste("./submit/submit_", DATE, "_", NUM, "_", PREPROCESS, "_rpart.csv", sep = "")
+  SUBMIT_FILENAME <- paste("./submit/submit_", DATE, "_", NUM, "_", PREPROCESS, "_xgbLinear.csv", sep = "")
   
   if ( !file.exists(SUBMIT_FILENAME) ) {
     write.table(out, #出力データ
